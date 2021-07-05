@@ -5,7 +5,7 @@ PoseFilter::PoseFilter(){
     nh.param("global_frame",    global_frame_,  std::string("map"));
     nh.param("base_frame",      base_frame_,    std::string("odom"));
     nh.param("pub_topic",       pub_topic_,     std::string("amcl_pose"));
-    nh.param("sub_topic_",      sub_topic_,     std::string("ndt_pose"));
+    nh.param("sub_topic",      sub_topic_,     std::string("ndt_pose"));
     pose_pub_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic_, 10);
     pose_sub_ = nh.subscribe(sub_topic_, 1, &PoseFilter::msgsCallback, this);
     timer_ = nh.createTimer(ros::Duration(0.5), &PoseFilter::timerCallback, this);
