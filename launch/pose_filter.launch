@@ -1,7 +1,7 @@
 <launch>
 
     <arg name="global_frame"    default="map"/>
-    <arg name="base_frame"      default="odom"/>
+    <arg name="base_frame"      default="base_link"/>
     <arg name="pub_topic"       default="/amcl_pose"/>
     <arg name="sub_topic"       default="/ndt_pose"/>
 

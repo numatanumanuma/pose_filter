@@ -3,9 +3,9 @@
 PoseFilter::PoseFilter(){
     ros::NodeHandle nh("~");
     nh.param("global_frame",    global_frame_,  std::string("map"));
-    nh.param("base_frame",      base_frame_,    std::string("odom"));
+    nh.param("base_frame",      base_frame_,    std::string("base_link"));
     nh.param("pub_topic",       pub_topic_,     std::string("amcl_pose"));
-    nh.param("sub_topic",      sub_topic_,     std::string("ndt_pose"));
+    nh.param("sub_topic",       sub_topic_,     std::string("ndt_pose"));
     pose_pub_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic_, 10);
     pose_sub_ = nh.subscribe(sub_topic_, 1, &PoseFilter::msgsCallback, this);
     timer_ = nh.createTimer(ros::Duration(0.5), &PoseFilter::timerCallback, this);
@@ -52,9 +52,16 @@ void PoseFilter::publishPose(){
 void PoseFilter::broadcastFrame(){
     static tf::TransformBroadcaster br;
 	tf::Transform transform;
-	transform.setOrigin(tf::Vector3(new_pose_.position.x, new_pose_.position.y, 0.0));
     tf::Quaternion quat;
+
+    // map -> odom
+    transform.setOrigin(tf::Vector3(0.0, 0.0, 0.0));
+	transform.setRotation(quat);
+	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), global_frame_, "odom"));
+
+    // odom -> base_link
+	transform.setOrigin(tf::Vector3(new_pose_.position.x, new_pose_.position.y, 0.0));
     quaternionMsgToTF(new_pose_.orientation, quat);
 	transform.setRotation(quat);
-	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), global_frame_, base_frame_));
+	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), "odom", base_frame_));
 }
