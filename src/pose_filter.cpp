@@ -8,71 +8,31 @@ PoseFilter::PoseFilter(){
     nh.param("sub_topic",       sub_topic_,     std::string("ndt_pose"));
     pose_pub_ = nh.advertise<geometry_msgs::PoseWithCovarianceStamped>(pub_topic_, 10);
     pose_sub_ = nh.subscribe(sub_topic_, 1, &PoseFilter::msgsCallback, this);
-    timer_ = nh.createTimer(ros::Duration(0.05), &PoseFilter::timerCallback, this);
-
-    pose_.position.x        = 0.0;
-    pose_.position.y        = 0.0;
-    pose_.position.z        = 0.0;
-    new_pose_.position.x    = 0.0;
-    new_pose_.position.y    = 0.0;
-    new_pose_.position.z    = 0.0;
-    new_pose_.orientation.x = 0.0;
-    new_pose_.orientation.y = 0.0;
-    new_pose_.orientation.z = 0.0;
-    new_pose_.orientation.w = 1.0;
-    
-}
-
-PoseFilter::~PoseFilter(){
-
 }
 
 void PoseFilter::msgsCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs){
-    pose_ = msgs->pose;
-    new_pose_.position.x = pose_.position.x;
-    new_pose_.position.y = pose_.position.y;
-    new_pose_.position.z = pose_.position.z;
-    new_pose_.orientation = pose_.orientation;
-
-    publishPose();
-}
-
-void PoseFilter::timerCallback(const ros::TimerEvent&){
-    broadcastFrame();
-    // ROS_INFO("x:%0.3f, y:%0.3f", pose_.position.x, pose_.position.y);
-}
-
-void PoseFilter::publishPose(){
-    static unsigned int seq = 0;
-    ++seq;
-    ros::Time stamp = ros::Time::now();
-    pose_msg_.header.seq = seq;
-    pose_msg_.header.stamp = stamp;
-    pose_msg_.header.frame_id = global_frame_;
-    pose_msg_.pose.pose = new_pose_;
-    // double eye[36]{};
-    // for(int i = 0; i < 36; i += 7)
-        // pose_msg_.pose.covariance[i] = 1.0;
-    // pose_msg_.pose.covariance = eye;
-    pose_pub_.publish(pose_msg_);
-    ros::Duration(0.01).sleep();
-}
-
-void PoseFilter::broadcastFrame(){
+    std::cout << "Here" << std::endl;
     static tf::TransformBroadcaster br{};
-	tf::Transform transform{};
-    tf::Transform new_transform{};
-    tf::Quaternion quat(0.0, 0.0, 0.0, 1.0);
-    tf::Quaternion new_quat;
+    geometry_msgs::PoseWithCovarianceStamped new_msg{};
+    new_msg.header = msgs->header;
+    new_msg.header.frame_id = global_frame_;
+    new_msg.pose.pose = msgs->pose;
+    for(int i = 0; i < 36; i += 7){
+        new_msg.pose.covariance[i] = 1.0;
+    }
+    pose_pub_.publish(new_msg);
 
-    // 子フレームから親フレームの順でpublishするべき
-    // odom -> base_link
-	new_transform.setOrigin(tf::Vector3(new_pose_.position.x, new_pose_.position.y, new_pose_.position.z));
-    quaternionMsgToTF(new_pose_.orientation, new_quat);
-	new_transform.setRotation(new_quat);
-	br.sendTransform(tf::StampedTransform(new_transform, ros::Time::now(), "odom", base_frame_));
+    tf::Transform tf_odom_base{};
+    tf_odom_base.setOrigin(tf::Vector3(
+        msgs->pose.position.x,
+        msgs->pose.position.y,
+        msgs->pose.position.z
+    ));
+    tf::Quaternion quat_odom_base;
+    quaternionMsgToTF(msgs->pose.orientation, quat_odom_base);
+    tf_odom_base.setRotation(quat_odom_base);
+    br.sendTransform(tf::StampedTransform(tf_odom_base, msgs->header.stamp, "odom", base_frame_));
 
-    // map -> odom
-    transform.setRotation(quat);
-	br.sendTransform(tf::StampedTransform(transform, ros::Time::now(), global_frame_, "odom"));
+    tf::Transform tf_map_odom{};
+    br.sendTransform(tf::StampedTransform(tf_map_odom, msgs->header.stamp,  global_frame_, "odom"));
 }
