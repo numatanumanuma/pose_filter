@@ -34,5 +34,7 @@ void PoseFilter::msgsCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs){
     br.sendTransform(tf::StampedTransform(tf_odom_base, msgs->header.stamp, "odom", base_frame_));
 
     tf::Transform tf_map_odom{};
+    tf::Quaternion i(0, 0, 0, 1);
+    tf_map_odom.setRotation(i);
     br.sendTransform(tf::StampedTransform(tf_map_odom, msgs->header.stamp,  global_frame_, "odom"));
 }
