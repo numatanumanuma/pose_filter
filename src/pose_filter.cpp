@@ -11,12 +11,13 @@ PoseFilter::PoseFilter(){
 }
 
 void PoseFilter::msgsCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs){
-    std::cout << "Here" << std::endl;
+    // std::cout << "Here" << std::endl;
     static tf::TransformBroadcaster br{};
     geometry_msgs::PoseWithCovarianceStamped new_msg{};
     new_msg.header = msgs->header;
     new_msg.header.frame_id = global_frame_;
     new_msg.pose.pose = msgs->pose;
+    new_msg.pose.pose.position.z = 0;
     for(int i = 0; i < 36; i += 7){
         new_msg.pose.covariance[i] = 1.0;
     }
@@ -26,7 +27,7 @@ void PoseFilter::msgsCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs){
     tf_odom_base.setOrigin(tf::Vector3(
         msgs->pose.position.x,
         msgs->pose.position.y,
-        msgs->pose.position.z
+        0
     ));
     tf::Quaternion quat_odom_base;
     quaternionMsgToTF(msgs->pose.orientation, quat_odom_base);

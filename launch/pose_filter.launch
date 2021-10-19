@@ -3,7 +3,8 @@
     <arg name="global_frame"    default="map"/>
     <arg name="base_frame"      default="base_link"/>
     <arg name="pub_topic"       default="/amcl_pose"/>
-    <arg name="sub_topic"       default="/ndt_pose"/>
+    <!-- <arg name="sub_topic"       default="/ndt_pose"/> -->
+    <arg name="sub_topic"       default="/localizer_pose"/>
 
     <node pkg="pose_filter" name="pose_filter" type="pose_filter_node" output="screen">
         <param name="global_frame"  value="$(arg global_frame)"/>
