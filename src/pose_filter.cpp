@@ -38,23 +38,27 @@ void PoseFilter::msgsCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs){
     pose_quat_before.normalize();
  
     tf::Vector3 axis(0,0,1);
-    double roll, pitch, yaw;
-    tf::Matrix3x3(pose_quat_before).getRPY(roll, pitch, yaw);
-    tf::Quaternion pose_quat_after(axis, yaw);
 
+
+    double roll, pitch, yaw;
+    // tf::Matrix3x3(pose_quat_before).getEulerZYX(z, y, x);
+    tf::Matrix3x3(pose_quat_before).getRPY(roll, pitch, yaw);
+    tf::Quaternion pose_quat_after(0 ,0, sin( yaw / 2 ), cos( yaw / 2 ));
 
     geometry_msgs::Quaternion qmsg;
     qmsg.x = pose_quat_after.getX();
     qmsg.y = pose_quat_after.getY();
     qmsg.z = pose_quat_after.getZ();
     qmsg.w = pose_quat_after.getW();
-    quaternionMsgToTF(qmsg, quat_odom_base);
 
+    // qmsg = msgs->pose.orientation; // ここ嘘
+    quaternionMsgToTF(qmsg, quat_odom_base);
 
     new_msg.pose.pose.position.x = msgs->pose.position.x;
     new_msg.pose.pose.position.y = msgs->pose.position.y;
     new_msg.pose.pose.position.z = 0;
     new_msg.pose.pose.orientation = qmsg;
+
     pose_pub_.publish(new_msg);
 
     // quaternionMsgToTF(msgs->pose.orientation, quat_odom_base);
